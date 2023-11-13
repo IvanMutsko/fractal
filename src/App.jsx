@@ -4,63 +4,143 @@ import './App.css';
 function App() {
   const canvasEl = useRef(null);
 
-  const coords = [];
+  const basePoints = {
+    a: {
+      x: null,
+      y: null,
+    },
+    b: {
+      x: null,
+      y: null,
+    },
+    c: {
+      x: null,
+      y: null,
+    },
+    start: {
+      x: null,
+      y: null,
+    },
+  };
 
-  function calcDistance(coordsArr) {
-    if (coords.length === 2) {
-      const x1 = coordsArr[0].pointX;
-      const x2 = coordsArr[1].pointX;
-      const y1 = coordsArr[0].pointY;
-      const y2 = coordsArr[1].pointY;
-
-      // const X = x2 - x1;
-      // const Y = y2 - y1;
-
-      const X = (x2 - x1) / 2;
-      const Y = (y2 - y1) / 2;
-
-      console.log(coordsArr[0].pointX + X, coordsArr[0].pointY + Y);
-      // console.log(coords);
-
-      // return Math.sqrt(X * X + Y * Y);
-      return [coordsArr[0].pointX + X, coordsArr[0].pointY + Y];
-    }
-    return;
-  }
+  let intervalID = null;
 
   const handleClick = e => {
     const canvas = canvasEl.current;
     const ctx = canvas.getContext('2d');
+
     ctx.fillStyle = 'rgb(200,0,0)';
 
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    const circle = new Path2D();
+    if (!basePoints.a.x || !basePoints.a.y) {
+      basePoints.a.x = x;
+      basePoints.a.y = y;
 
-    circle.arc(x - 2, y - 3, 3, 0, 2 * Math.PI); // -2 & -3 for centering on mouse
-    ctx.fill(circle);
-
-    // coords 2 point
-    coords.push({ pointX: x - 2, pointY: y - 3 });
-    const test = calcDistance(coords);
-
-    if (test) {
       const circle = new Path2D();
-      circle.arc(test[0], test[1], 3, 0, 2 * Math.PI);
+
+      circle.arc(x - 2, y - 3, 5, 0, 2 * Math.PI);
       ctx.fill(circle);
+      return;
+    }
+    if (!basePoints.b.x || !basePoints.b.y) {
+      basePoints.b.x = x;
+      basePoints.b.y = y;
+
+      const circle = new Path2D();
+
+      circle.arc(x - 2, y - 3, 5, 0, 2 * Math.PI);
+      ctx.fill(circle);
+      return;
+    }
+    if (!basePoints.c.x || !basePoints.c.y) {
+      basePoints.c.x = x;
+      basePoints.c.y = y;
+
+      const circle = new Path2D();
+
+      circle.arc(x - 2, y - 3, 5, 0, 2 * Math.PI);
+      ctx.fill(circle);
+      return;
+    }
+    if (!basePoints.start.x || !basePoints.start.y) {
+      basePoints.start.x = x;
+      basePoints.start.y = y;
+
+      const circle = new Path2D();
+
+      circle.arc(x - 2, y - 3, 1, 0, 2 * Math.PI);
+      ctx.fillStyle = 'rgb(0, 0, 200)';
+      ctx.fill(circle);
+      return;
     }
   };
 
+  const calcAverageDistance = (x2, y2) => {
+    const x1 = basePoints.start.x;
+    const y1 = basePoints.start.y;
+
+    const X = (x2 - x1) / 2;
+    const Y = (y2 - y1) / 2;
+
+    basePoints.start.x = basePoints.start.x + X;
+    basePoints.start.y = basePoints.start.y + Y;
+  };
+
+  const startRendering = () => {
+    intervalID = setInterval(() => {
+      const randomNumber = Math.floor(Math.random() * 90) + 1;
+
+      if (randomNumber <= 30) {
+        calcAverageDistance(basePoints.a.x, basePoints.a.y);
+      }
+      if (randomNumber > 30 && randomNumber <= 60) {
+        calcAverageDistance(basePoints.b.x, basePoints.b.y);
+      }
+      if (randomNumber > 60) {
+        calcAverageDistance(basePoints.c.x, basePoints.c.y);
+      }
+
+      const canvas = canvasEl.current;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = 'rgb(0,200,0)';
+      const circle = new Path2D();
+
+      circle.arc(
+        basePoints.start.x - 2,
+        basePoints.start.y - 3,
+        1,
+        0,
+        2 * Math.PI
+      );
+
+      ctx.fill(circle);
+    }, 10);
+  };
+
   return (
-    <canvas
-      ref={canvasEl}
-      id="fractal"
-      width="500px"
-      height="300px"
-      onClick={handleClick}
-    ></canvas>
+    <div className="wrap">
+      <h1 className="title">
+        Choose 3 main points in the field and the fourth as a reference point
+      </h1>
+      <canvas
+        ref={canvasEl}
+        id="fractal"
+        width="500px"
+        height="300px"
+        onClick={handleClick}
+      ></canvas>
+      <div className="buttons">
+        <button type="button" onClick={startRendering}>
+          Start
+        </button>
+        <button type="button" onClick={() => clearInterval(intervalID)}>
+          Stop
+        </button>
+      </div>
+    </div>
   );
 }
 
